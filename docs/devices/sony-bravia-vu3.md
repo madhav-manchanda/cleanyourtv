@@ -1,44 +1,42 @@
-# Sony BRAVIA VU3 (BRAVIA_VU3_4K)
+# Sony BRAVIA VU3 / KD-55X75K — build 265-60835
 
-**Status: diagnostic report only. This is not a tested debloat list.** The information below comes
-from Clean Your TV app 0.3.3's report, read on 2026-10-31. No packages have been disabled by this
-repository change, and the report does not establish that any candidate can be safely disabled for
-several days.
+**Status: device report and firmware-variant notes.** This document records the Clean Your TV app
+0.3.3 report supplied for a Sony BRAVIA VU3 on 2026-10-31. It is not a separate tested debloat list.
 
 ## Device identity
 
 | Property | Reported value |
 |---|---|
-| Manufacturer / brand | Sony |
-| Retail model | BRAVIA VU3 |
-| Android device | `BRAVIA_VU3_4K` |
+| Retail model reported by app | BRAVIA VU3 |
+| Android product / device | `BRAVIA_VU3_4K` |
+| Corresponding retail model in the upstream device profile | Sony KD-55X75K |
+| Manufacturer | Sony |
 | Android | 14 (SDK 34) |
-| Firmware build | `Sony/BRAVIA_VU3/BRAVIA_VU3_4K:14/UKR1.240726.001/265-60835:user/release-keys` |
-| Platform family | Realtek (also reported by the related VU31 profile) |
+| Build | `Sony/BRAVIA_VU3/BRAVIA_VU3_4K:14/UKR1.240726.001/265-60835:user/release-keys` |
+| Platform | Realtek rtd2885m family |
 | Original Home | Google TV |
 | Google Play services | Present |
 | Report date | 2026-10-31 |
 
-The repository already has a tested-for-observation Sony BRAVIA VU31 4K list at
-[`examples/sony-bravia-vu31/`](../../examples/sony-bravia-vu31/debloat.txt). That device reports
-the same Android release and firmware build prefix (`UKR1.240726.001`) and is also a Realtek
-Google TV 14 model. It is a useful comparison, **not proof that the VU3 and VU31 are interchangeable**:
-the device identifiers differ (`BRAVIA_VU3_4K` versus `BRAVIA_VU31_4K`). Do not apply the VU31
-list wholesale to a VU3 without checking package presence, dependencies, inputs and behaviour on
-this exact set.
+The fork's source branch did not yet contain the exact `BRAVIA_VU3_4K` example. The original
+upstream project has a Sony BRAVIA VU3 / KD-55X75K profile at
+[`examples/sony-bravia-vu3/`](../../examples/sony-bravia-vu3/README.md). Its tested list records
+build `UKR1.240726.001/386-60842`; this report records `UKR1.240726.001/265-60835`.
+The product identifier and Android release match, but the build suffixes differ. The upstream list
+is therefore a close model reference, **not a verified package list for build 265-60835**.
 
 ## Package state in the supplied report
 
-The report says there are 150 system apps:
+The app reported 150 system apps:
 
-| State | Count | Meaning |
-|---|---:|---|
-| Switched off by Clean Your TV | 8 | Already disabled by the phone app |
-| Off, disabled | 1 | Factory-disabled package |
-| On, enabled | 6 | Explicitly enabled |
-| On, default | 135 | Default state |
+| State | Count |
+|---|---:|
+| Switched off by Clean Your TV | 8 |
+| Off, disabled (factory state) | 1 |
+| On, enabled | 6 |
+| On, default | 135 |
 
-The eight packages reported as switched off by the app are:
+The eight packages reported as disabled by the app are:
 
 ```text
 com.android.printspooler
@@ -51,101 +49,84 @@ com.sony.dtv.sonyselect
 com.sony.dtv.sonytab
 ```
 
-The package reported as already disabled by the TV is
-`com.sony.dtv.b2b.vendorprotocol`. Do not assume that this was disabled by CleanYourTV or add it
-to a restore list as though this tool changed it. The report also says 13 other apps were not named;
-their identities and states are unknown.
+These overlap with packages in the upstream VU3 list. The report says
+`com.sony.dtv.b2b.vendorprotocol` was already disabled; do not treat it as a change made by this
+tool. The six explicitly enabled packages include Sony Eco Dashboard and device-control / IoT
+services. Thirteen other apps were not named, so their package identities and states remain unknown.
 
-The explicitly enabled packages include `com.sony.dtv.ecodashboard`,
-`com.sony.dtv.m2.devicecontrolservice`, `com.sony.dtv.m2.seeds.auth`,
-`com.sony.dtv.m2.seeds.iot` and `com.sony.dtv.m2.seeds.iot.remotestart`. Their presence is
-not evidence that they are bloat. In particular, the related VU31 notes report that
-`com.sony.dtv.applicationdisabler` can re-enable Eco Dashboard at boot; investigate that
-relationship before changing either package.
+The upstream VU3 notes say `com.sony.dtv.applicationdisabler` can re-enable
+`com.sony.dtv.ecodashboard` at boot on related Sony firmware. Keep this dependency in mind before
+changing either package.
 
-## Home and setup-wizard observations
+## HOME and WIZARD_WIFI
 
-The report resolves HOME to:
+The report resolves HOME to
+`com.google.android.apps.tv.launcherx/.home.HomeActivity`. It also lists
+`com.google.android.tungsten.setupwraith/.RecoveryActivity` as a HOME claimant at priority 1,
+followed by Realtek and Android settings fallback activities.
 
-```text
-com.google.android.apps.tv.launcherx/.home.HomeActivity
-```
+The app reported `Home switch: blocked WIZARD_WIFI`. This is a safety stop. Do not force a Home
+switch or disable setupwraith to get around it.
 
-It also reports these HOME claimants:
-
-- `com.google.android.tungsten.setupwraith/.RecoveryActivity` (priority 1)
-- `com.realtek.advancesetting/.FallbackHome` (priority -999)
-- `com.android.tv.settings/.system.FallbackHome` (priority -1000)
-
-The app reports `Home switch: blocked WIZARD_WIFI`. Treat this as a safety stop, not an invitation
-to force the launcher change. The related VU31 notes explain that disabling
-`com.google.android.tungsten.setupwraith` can remove saved Wi-Fi credentials when that package
-owns the saved network. Before any Home handover or setup-wizard change, inspect the live Wi-Fi
-owner and let the repository's existing Home/setup guards decide whether the operation can proceed.
-
-Useful read-only checks, after ADB is connected and authorized:
+The upstream VU3 profile's second unit had its saved Wi-Fi network owned by
+`android.uid.system`, so setupwraith could be disabled there. That observation does not establish
+the owner on this unit. Check the live network owner first:
 
 ```sh
 tools/tv.py 'dumpsys wifi' | grep -o 'cname=[^ ]*'
-tools/tv.py 'cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME'
-tools/tv.py 'cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME'
-tools/tv.py 'pm list packages -d'
 ```
 
-Do not set `FORCE_SETUPWRAITH=1` or `FORCE_HOME=1` merely to get past the app's warning. Use
-those existing escape hatches only under the conditions documented by `AGENTS.md` and
-`tools/disable.sh`, with the owner's informed agreement and a verified recovery route.
+If the output names setupwraith, disabling it can delete the saved Wi-Fi network and disconnect ADB.
+If the owner cannot be determined, stop and keep setupwraith enabled. Follow the existing guards in
+`tools/disable.sh`; do not use `FORCE_SETUPWRAITH=1` or `FORCE_HOME=1` as a workaround.
 
-## Realtek / Sony functionality to preserve while investigating
+## Launcher choice and remote behaviour
 
-The related VU31 profile reports that the following components participate in TV, tuner, HDMI/AV,
-input-menu, remote or Sony system behaviour. Treat them as **protected pending VU3-specific
-verification**, not as debloat candidates:
+The upstream VU3 profile records that Realtek routes the Netflix, YouTube, Prime Video and YouTube
+Music remote buttons through Google's stock `launcherx` receiver. Disabling launcherx can therefore
+break those buttons. Its tested workaround keeps launcherx enabled and redirects Home to the
+CleanYourTV launcher with key filtering off; details and the exact configuration are in
+[`examples/sony-bravia-vu3/README.md`](../../examples/sony-bravia-vu3/README.md).
+
+This is the preferred option to investigate for this device, but it still requires confirmation on
+build `265-60835`. Keep Google TV available as the recovery/default option until the Home redirect,
+real remote buttons, reboot and restoration have all been checked on this firmware.
+
+## Components to preserve while validating
+
+The upstream VU3 profile identifies these as TV/input or system dependencies. Keep them enabled
+unless VU3-specific evidence proves otherwise:
 
 - `com.realtek.dtv`
 - `com.realtek.tv.atv`
 - `com.realtek.tv.passthrough`
-- `com.realtek.advancesetting` (also owns fallback and, on the related VU31, remote app-button handling)
-- `com.android.tv` (Live Channels / Live TV on the related VU31)
-- `com.sony.dtv.smartui` (Sony input-selection UI on the related VU31)
+- `com.realtek.advancesetting`
+- `com.android.tv` (Live TV)
+- `com.sony.dtv.smartui` (Sony input-selection UI)
 - `com.sony.dtv.sonysystemservice`
 - `com.sony.dtv.m2.devicecontrolservice`
 - `com.sony.dtv.ipcontrol` and `com.sony.dtv.ipcontrolaux`
 - Realtek TV/input overlays and providers
+- Google Play Store and Play Services, Bluetooth, Wi-Fi, Settings, remote and keyboard services
 
-The exact VU3 report lists these packages as enabled/default, but package state alone does not prove
-what a feature depends on. Confirm HDMI, CEC, tuner/Live TV, Bluetooth/remote, Wi-Fi, AirPlay,
-Chromecast/casting, voice input, timers and firmware updates after any future small-batch test.
+After any small-batch test, verify HOME, Settings, Wi-Fi, Bluetooth/remote, HDMI/CEC, tuner/Live TV,
+streaming apps, casting, voice, timers and firmware updates. Do not infer package safety from a
+package name or from a different firmware suffix.
 
-## Balanced-cleaning plan for this exact report
+## Recommended workflow for build 265-60835
 
-1. Keep the eight already-disabled packages recorded above as **observed current state**, not as a
-   validated VU3 recommendation. Ask the owner which features they use before retaining each change.
-2. Keep `com.sony.dtv.b2b.vendorprotocol` in the baseline as factory-disabled; do not claim this
-   tool disabled it.
-3. Do not add a new `examples/sony-bravia-vu3/debloat.txt` yet. Per
-   [the TV-list workflow](../workflows/tv-list.md), a folder under `examples/` requires a list
-   whose packages were actually disabled and lived with for several days.
-4. Make a complete backup before testing: installed packages, disabled packages, build properties,
-   relevant settings, HOME resolution and Wi-Fi network owner. Keep the backup and the exact list
-   used for the matching `tools/restore.sh` invocation.
-5. Test only a small, owner-approved batch of optional packages at a time. Verify after each batch
-   and after a cold reboot: HOME, Settings, Wi-Fi, Bluetooth/remote, HDMI/CEC, tuner/Live TV,
-   streaming apps, casting, voice, timers and updates.
-6. Record packages re-enabled, failures, reboot behaviour and the number of days lived with the
-   changes. Only then promote the result to a tested example list.
+1. Capture a fresh `tools/tv.py --probe`, installed-package list, disabled-package list, HOME
+   resolution, Wi-Fi network owner and relevant settings before changing anything.
+2. Keep the original backup and exact package list. The repository's `tools/disable.sh` records
+   state for `tools/restore.sh`; never uninstall packages.
+3. Compare the VU3 reference list against packages actually present on this unit. Review every
+   package and its dependency before applying any new disable.
+4. Keep the stock launcher enabled for the first launcher test. Follow the VU3 README's
+   `stock_home_redirect` approach only after the Wi-Fi/setup guard passes.
+5. Disable only owner-approved optional packages in small batches. Reboot and check the real remote
+   after each relevant change.
+6. Record any package re-enabled, regressions, and days of normal use. Do not label this firmware
+   variant as tested until it has been lived with for several days.
 
-## Launcher choice
-
-The report shows Google TV's `launcherx` is currently the Home owner and that the phone app blocked
-the switch because of `WIZARD_WIFI`. Keep Google TV as the safe default until the setup-wizard and
-Wi-Fi ownership checks pass. If a custom launcher is later selected, install and verify it as Home
-before disabling the stock launcher; retain the stock launcher as a selectable recovery option.
-The repository's launcher settings can open Android's default-home picker on devices that expose it.
-
-## Related reference
-
-- [Sony BRAVIA VU31 4K tested notes/list](../../examples/sony-bravia-vu31/debloat.txt) — same
-  Android 14 / `UKR1.240726.001` family and Realtek platform, but a different device identifier.
-- [Workflow: add or update a TV list](../workflows/tv-list.md).
-- [Repository safety rules](../../AGENTS.md).
+Related: [Sony BRAVIA VU3 reference profile](../../examples/sony-bravia-vu3/README.md),
+[TV-list workflow](../workflows/tv-list.md), and [repository safety rules](../../AGENTS.md).
