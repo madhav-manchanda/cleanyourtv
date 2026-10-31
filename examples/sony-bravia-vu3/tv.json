@@ -1,0 +1,6 @@
+{
+  "tv": "Sony BRAVIA KD-55X75K (BRAVIA_VU3_4K, Realtek rtd2885m)",
+  "os": "Google TV 14",
+  "brand": "Sony",
+  "notes": "Tested on build UKR1.240726.001/386-60842. The supplied BRAVIA_VU3_4K report is build UKR1.240726.001/265-60835, so treat this list as a close reference rather than a verified match. Keeps Live TV, core Google services, streaming apps and inputs; launcher notes cover keeping stock launcherx enabled for remote app buttons."
+}
